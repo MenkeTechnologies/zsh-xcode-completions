@@ -1,5 +1,7 @@
 # zsh-xcode-completions
 
+[![CI](https://github.com/MenkeTechnologies/zsh-xcode-completions/actions/workflows/ci.yml/badge.svg)](https://github.com/MenkeTechnologies/zsh-xcode-completions/actions/workflows/ci.yml)
+
 Zsh completions for some of the Xcode command line tools. Currently:
 
 - [`genstrings`](https://developer.apple.com/library/mac/documentation/Darwin/Reference/ManPages/man1/genstrings.1.html)

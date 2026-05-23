@@ -1,6 +1,20 @@
-# zsh-xcode-completions
+```
+ ███████╗███████╗██╗  ██╗
+ ╚══███╔╝██╔════╝██║  ██║
+   ███╔╝ ███████╗███████║
+  ███╔╝  ╚════██║██╔══██║
+ ███████╗███████║██║  ██║
+ ╚══════╝╚══════╝╚═╝  ╚═╝
+       [ x c o d e ]
+```
 
 [![CI](https://github.com/MenkeTechnologies/zsh-xcode-completions/actions/workflows/ci.yml/badge.svg)](https://github.com/MenkeTechnologies/zsh-xcode-completions/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![zsh](https://img.shields.io/badge/zsh-plugin-cyan.svg)](https://github.com/MenkeTechnologies/zpwr)
+
+### `[ZSH COMPLETIONS FOR THE XCODE COMMAND-LINE TOOLS]`
+
+> *"`xcodebuild`, `xcrun`, `genstrings`, `nm`, `plutil`, `swift` — all completed."*
 
 Zsh completions for some of the Xcode command line tools. Currently:
 
@@ -14,13 +28,24 @@ Zsh completions for some of the Xcode command line tools. Currently:
 - `swift-demangle`
 - `swift`
 
-# Installation
+### [`strykelang`](https://github.com/MenkeTechnologies/strykelang) &middot; [`zshrs`](https://github.com/MenkeTechnologies/zshrs) · [`MenkeTechnologiesMeta`](https://github.com/MenkeTechnologies/MenkeTechnologiesMeta) · [`zsh-more-completions`](https://github.com/MenkeTechnologies/zsh-more-completions) · [`zsh-cargo-completion`](https://github.com/MenkeTechnologies/zsh-cargo-completion) · [`zpwr`](https://github.com/MenkeTechnologies/zpwr)
+
+---
+
+## Table of Contents
+
+- [\[0x00\] Installation](#0x00-installation)
+- [\[0x01\] TODO:](#0x01-todo)
+
+---
+
+## [0x00] Installation
 
 ```sh
 brew install keith/formulae/zsh-xcode-completions
 ```
 
-# TODO:
+## [0x01] TODO:
 
 - lipo
 - otool

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="description" content="zsh-xcode-completions — Engineering report. 11 #compdef files covering the Xcode CLI surface (xcodebuild, xcrun, swift, swift-demangle, nm, plutil, strings, dyldinfo, genstrings, instruments, xcode-select). 436 LOC, 40 zunit @test cases, 21 structural gates. xcrun shim binary works around xcrun's nested-completion limitation.">
+  <title>zsh-xcode-completions &mdash; Engineering Report</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&amp;family=Share+Tech+Mono&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="hud-static.css">
+  <link rel="stylesheet" href="tutorial.css">
+  <style>
+    .tutorial-main { max-width: 76rem; }
+
+    .file-table { width:100%;border-collapse:collapse;margin:0.6rem 0;font-size:12px; }
+    .file-table th { background:var(--bg-secondary);color:var(--cyan);font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;text-align:left;padding:7px 10px;border:1px solid var(--border); }
+    .file-table td { padding:6px 10px;border:1px solid var(--border);color:var(--text-dim);vertical-align:middle; }
+    .file-table tr:hover td { background:var(--bg-hover); }
+    .file-table td:first-child { font-family:'Share Tech Mono',monospace;color:var(--accent-light);font-weight:600;white-space:nowrap; }
+    .file-table .num { text-align:right;font-family:'Share Tech Mono',monospace; }
+    .file-table .total-row td { background:var(--bg-secondary);font-weight:700;color:var(--text);border-top:2px solid var(--cyan); }
+    .file-table code { font-size:11px;color:var(--accent-light);background:var(--bg-primary);padding:1px 4px;border-radius:2px; }
+
+    .stat-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(14rem,1fr));gap:0.75rem;margin:1.2rem 0; }
+    .stat-card { border:1px solid var(--border);border-top:3px solid var(--cyan);background:var(--bg-card);padding:1rem 1.2rem;border-radius:2px;text-align:center; }
+    .stat-card .stat-val { font-family:'Orbitron',sans-serif;font-size:28px;font-weight:900;color:var(--cyan);line-height:1.1;text-shadow:0 0 20px var(--cyan-glow); }
+    .stat-card .stat-val.accent { color:var(--accent);text-shadow:0 0 20px var(--accent-glow); }
+    .stat-card .stat-val.green  { color:var(--green);text-shadow:0 0 20px rgba(57,255,20,.3); }
+    .stat-card .stat-label { font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted);margin-top:0.5rem; }
+    @keyframes glow-pulse { 0%,100%{text-shadow:0 0 20px var(--cyan-glow)}50%{text-shadow:0 0 40px var(--cyan-glow),0 0 80px var(--cyan-dim)} }
+    .stat-card .stat-val { animation:glow-pulse 3s ease-in-out infinite; }
+
+    .section-rule { border:none;border-top:1px dashed var(--border);margin:2rem 0; }
+
+    .feature-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(22rem,1fr));gap:0.65rem;margin:0.8rem 0; }
+    .feature-card { border:1px solid var(--border);border-left:3px solid var(--cyan);background:var(--bg-card);padding:0.7rem 1rem;border-radius:2px; }
+    .feature-card h4 { font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--cyan);margin:0 0 0.3rem; }
+    .feature-card p { margin:0;font-size:11px;color:var(--text-dim);line-height:1.55; }
+    .feature-card code { font-size:10.5px;color:var(--accent-light);background:var(--bg-primary);padding:1px 4px;border-radius:2px; }
+    .feature-card ul { margin:0.3rem 0 0;padding-left:1.2rem;font-size:11px;color:var(--text-dim);line-height:1.6; }
+    .feature-card li code { font-size:10px; }
+  </style>
+</head>
+<body>
+  <div class="app tutorial-app" id="reportApp">
+    <div class="crt-scanline" id="crtH" aria-hidden="true"></div>
+    <div class="crt-scanline-v" id="crtV" aria-hidden="true"></div>
+
+    <header class="tutorial-header">
+      <div class="tutorial-header-inner">
+        <div>
+          <h1 class="tutorial-brand">// ZSH-XCODE-COMPLETIONS &mdash; ENGINEERING REPORT</h1>
+          <nav class="tutorial-crumbs" aria-label="Breadcrumb">
+            <span class="current">Engineering Report</span>
+            <span class="sep">/</span>
+            <a href="index.html">Docs</a>
+            <span class="sep">/</span>
+            <a href="https://github.com/MenkeTechnologies/zsh-xcode-completions" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <span class="sep">/</span>
+            <a href="https://github.com/MenkeTechnologies/MenkeTechnologiesMeta" target="_blank" rel="noopener noreferrer">Meta</a>
+          </nav>
+          <p style="margin:0.35rem 0 0;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text-dim);letter-spacing:0.03em;opacity:0.75;">
+            11 <code>#compdef</code> files for the Xcode CLI &middot; <code>xcodebuild</code> / <code>xcrun</code> / <code>swift</code> / <code>swift-demangle</code> / <code>nm</code> / <code>plutil</code> / <code>strings</code> / <code>dyldinfo</code> / <code>genstrings</code> / <code>instruments</code> / <code>xcode-select</code> &middot; SDK / scheme / target / configuration / arch live-queried from <code>xcodebuild -list</code> &middot; <code>bin/swift-demangle</code> xcrun shim binary
+          </p>
+        </div>
+        <div class="tutorial-toolbar">
+          <button type="button" class="btn btn-secondary" id="btnTheme" title="Toggle light/dark">Theme</button>
+          <button type="button" class="btn btn-secondary active" id="btnCrt" title="CRT scanline overlay">CRT</button>
+          <button type="button" class="btn btn-secondary active" id="btnNeon" title="Neon border pulse">Neon</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="tutorial-main">
+
+      <!-- ═══════════════════════════════════════ -->
+      <!-- SECTION 1: EXECUTIVE SUMMARY           -->
+      <!-- ═══════════════════════════════════════ -->
+      <h2 class="tutorial-title"><span class="step-hash">&gt;_</span>EXECUTIVE SUMMARY</h2>
+      <p class="tutorial-subtitle">zsh-xcode-completions is the largest plugin in this batch by completion-file count: <strong>11 separate <code>#compdef</code> files</strong> covering the Xcode command-line tools, totaling 435 lines under <code>src/</code> plus a 1-line plugin entrypoint. Coverage spans the entire mac developer CLI surface &mdash; <code>xcodebuild</code> (the largest at 139 lines), <code>swift</code> (54 lines for the compiler driver), <code>xcrun</code> (the developer-tool dispatcher with SDK/toolchain switches), <code>nm</code> (symbol table dump), <code>plutil</code> (plist conversion), <code>strings</code>, <code>dyldinfo</code>, <code>genstrings</code> (localization), <code>instruments</code> (profiling templates), <code>swift-demangle</code>, and <code>xcode-select</code>. Many completers shell out to <code>xcodebuild</code> itself for live data: <strong>schemes / targets / configurations / valid-archs are queried at completion time</strong> via <code>xcodebuild -list</code> + <code>xcodebuild -showBuildSettings</code> piped through <code>sed</code> / <code>cut</code> for parsing. SDK lists go through <code>_retrieve_cache SDKS</code> / <code>_store_cache SDKS</code> because they rarely change. An <code>xcrun</code>-shim binary at <code>bin/swift-demangle</code> works around xcrun's inability to dispatch zsh completion through its <code>xcrun &lt;tool&gt; ...</code> indirection &mdash; the shim is a one-line <code>xcrun swift-demangle "$@"</code> wrapper that surfaces the nested tool as a direct PATH binary so its <code>_swift-demangle</code> completer can fire.</p>
+
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-val">435</div><div class="stat-label">Total Completion-File LOC</div></div>
+        <div class="stat-card"><div class="stat-val">11</div><div class="stat-label">#compdef Files</div></div>
+        <div class="stat-card"><div class="stat-val accent">40</div><div class="stat-label">zunit @test Cases</div></div>
+        <div class="stat-card"><div class="stat-val green">21</div><div class="stat-label">Structural Gates (.sh)</div></div>
+        <div class="stat-card"><div class="stat-val">6</div><div class="stat-label">zunit Files</div></div>
+        <div class="stat-card"><div class="stat-val">62</div><div class="stat-label">Git Commits</div></div>
+      </div>
+
+      <hr class="section-rule">
+
+      <!-- ═══════════════════════════════════════ -->
+      <!-- SECTION 2: ARCHITECTURE                 -->
+      <!-- ═══════════════════════════════════════ -->
+      <h2 class="tutorial-title"><span class="step-hash">~</span>ARCHITECTURE &middot; FILE STRUCTURE</h2>
+      <p class="tutorial-subtitle">Eleven <code>#compdef</code> files under <code>src/</code>, one <code>xcrun</code>-shim binary under <code>bin/</code>, one 1-line plugin entrypoint.</p>
+
+      <table class="file-table">
+        <thead>
+          <tr>
+            <th>Path</th>
+            <th class="num">Lines</th>
+            <th>Role</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>src/_xcodebuild</td><td class="num">139</td><td>Largest completer &mdash; 30+ flags (<code>-scheme</code>, <code>-target</code>, <code>-configuration</code>, <code>-sdk</code>, <code>-arch</code>, <code>-workspace</code>, <code>-project</code>, <code>-archivePath</code>, <code>-derivedDataPath</code>, sanitizer toggles, code coverage, export format/signing) + 5 build actions (<code>analyze</code>, <code>archive</code>, <code>build</code>, <code>clean</code>, <code>install</code>, <code>installsrc</code>, <code>test</code>); shells out to <code>xcodebuild -list</code> / <code>-showsdks</code> / <code>-showBuildSettings</code> at completion time</td></tr>
+          <tr><td>src/_swift</td><td class="num">54</td><td>Swift compiler driver &mdash; <code>-emit-assembly/-library/-object</code>, <code>-F</code> framework path, <code>-I</code> import path, <code>-L</code> library path, <code>-l</code> library link, <code>-module-cache-path</code>, <code>-O</code>/<code>-Onone</code>/<code>-Ounchecked</code>, <code>-sdk</code> with SDK cache, <code>-target-cpu</code>, <code>-Xcc</code>/<code>-Xlinker</code> passthrough</td></tr>
+          <tr><td>src/_xcrun</td><td class="num">49</td><td>The tool dispatcher &mdash; <code>-f</code>/<code>--find</code>, <code>-l</code>/<code>--log</code>, <code>-r</code>/<code>--run</code>, <code>-k</code>/<code>--kill-cache</code>, <code>--sdk</code> (cached SDK list), <code>--toolchain</code> (glob <code>/Applications/Xcode*.app/Contents/Developer/Toolchains/*.xctoolchain</code>), <code>--show-sdk-{path,platform-path,platform-version,version}</code>; executable completion via <code>ls $(dirname $(xcrun -f swift))</code></td></tr>
+          <tr><td>src/_nm</td><td class="num">38</td><td><code>-a</code>/<code>-A</code>/<code>-f</code>/<code>-g</code>/<code>-j</code>/<code>-l</code>/<code>-m</code>/<code>-n</code>/<code>-o</code>/<code>-p</code>/<code>-r</code>/<code>-s</code>/<code>-u</code>/<code>-U</code>/<code>-x</code>; <code>-arch</code> with arch enum</td></tr>
+          <tr><td>src/_instruments</td><td class="num">33</td><td><code>-s templates/devices</code>; <code>-t</code> template selection backed by <code>_instruments_templates</code> cache (parses quoted output of <code>instruments -s templates</code>); <code>-p</code> attach-pid via zsh's <code>_pids</code>; mutex group between pid-attach and command-launch modes</td></tr>
+          <tr><td>src/_plutil</td><td class="num">29</td><td><code>-help</code>, <code>-lint</code>, <code>-convert</code> (with format enum: <code>xml1</code>/<code>binary1</code>/<code>json</code>), <code>-p</code> print, <code>-extract</code>, <code>-replace</code>, <code>-insert</code>, <code>-remove</code></td></tr>
+          <tr><td>src/_strings</td><td class="num">26</td><td>Symbol-table strings dump &mdash; flag set + file completion</td></tr>
+          <tr><td>src/_xcode-select</td><td class="num">19</td><td><code>-p</code>/<code>--print-path</code>, <code>-r</code>/<code>--reset</code>, <code>-s</code>/<code>--switch</code> backed by glob of <code>/Applications/Xcode*.app</code>, <code>--install</code></td></tr>
+          <tr><td>src/_genstrings</td><td class="num">18</td><td>Localization-string generator flag set + source-file completion</td></tr>
+          <tr><td>src/_swift-demangle</td><td class="num">15</td><td>Swift name-mangling decoder &mdash; flag set + stdin/file input</td></tr>
+          <tr><td>src/_dyldinfo</td><td class="num">15</td><td>dyld load-commands inspector</td></tr>
+          <tr><td>bin/swift-demangle</td><td class="num">3</td><td><code>#!/bin/sh</code> shim &mdash; <code>xcrun swift-demangle "$@"</code> &mdash; gives zsh a direct PATH binary it can run <code>_swift-demangle</code> against (xcrun's nested dispatch hides it from zsh's completion-system <code>#compdef</code> lookup)</td></tr>
+          <tr><td>zsh-xcode-completions.plugin.zsh</td><td class="num">1</td><td><code>fpath=("${0:h}/src" $fpath)</code> &mdash; only line, no setup chrome needed because every file is autoloaded by zsh's compsys when <code>compinit</code> runs after fpath patch</td></tr>
+          <tr class="total-row"><td>Total source</td><td class="num">~439</td><td>11 completion files + 1 shim + 1 entrypoint</td></tr>
+        </tbody>
+      </table>
+
+      <hr class="section-rule">
+
+      <!-- ═══════════════════════════════════════ -->
+      <!-- SECTION 3: COMPLETION COVERAGE          -->
+      <!-- ═══════════════════════════════════════ -->
+      <h2 class="tutorial-title"><span class="step-hash">@</span>COMPLETION COVERAGE</h2>
+      <p class="tutorial-subtitle">11 distinct tools. Common pattern: <code>_arguments</code> flag table + state machine for context-sensitive args + project-aware queries that shell out to the tool itself.</p>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <h4>Project-aware xcodebuild completion</h4>
+          <p>Instead of static enum lists, <code>_xcodebuild</code> queries the current directory:</p>
+          <ul>
+            <li><code>-scheme &lt;TAB&gt;</code> &rarr; <code>xcodebuild -list</code> output, sed-extracted between "Schemes:" and end</li>
+            <li><code>-target &lt;TAB&gt;</code> &rarr; <code>xcodebuild -list</code>, sed-extracted between "Targets:" and "Build Configurations:"</li>
+            <li><code>-configuration &lt;TAB&gt;</code> &rarr; same, between "Build Configurations:" and "If no build"</li>
+            <li><code>-arch &lt;TAB&gt;</code> &rarr; <code>xcodebuild -showBuildSettings | grep VALID_ARCHS | cut -f 2 -d '='</code></li>
+            <li><code>-project &lt;TAB&gt;</code> &rarr; glob <code>*.xcodeproj</code> via <code>_multi_parts /</code></li>
+            <li><code>-workspace &lt;TAB&gt;</code> &rarr; glob <code>*.xcworkspace</code></li>
+            <li><code>-xcconfig &lt;TAB&gt;</code> &rarr; glob <code>*.xcconfig</code></li>
+          </ul>
+        </div>
+        <div class="feature-card">
+          <h4>Cached SDK list (cross-tool)</h4>
+          <p>Both <code>_xcodebuild</code> and <code>_swift</code> share the same SDK-cache idiom: <code>_retrieve_cache SDKS</code> &rarr; populate <code>_installed_sdks</code> via <code>xcodebuild -showsdks</code> &rarr; <code>_store_cache SDKS</code>. The cache key (<code>SDKS</code>) is shared across completers so a single SDK install/uninstall invalidates everywhere.</p>
+        </div>
+        <div class="feature-card">
+          <h4>xcrun toolchain glob</h4>
+          <p><code>xcrun --toolchain &lt;TAB&gt;</code> &rarr; <code>toolchains=(/Applications/Xcode*.app/Contents/Developer/Toolchains/*.xctoolchain)</code> &mdash; glob over every installed Xcode's toolchains directory. Works with side-by-side Xcode installations (beta + release).</p>
+        </div>
+        <div class="feature-card">
+          <h4>Instruments template cache</h4>
+          <p><code>instruments -t &lt;TAB&gt;</code> &rarr; <code>_instruments_templates</code> &rarr; <code>_call_program templates 'instruments -s templates'</code>. Output format is one quoted template per line with a "Known Templates" header. The completer uses <code>${(Q)${(f)...}}</code> to split-by-line + strip-quotes, then <code>shift template_list</code> to drop the header. <code>_retrieve_cache _instruments_templates</code> persists the result so repeated <kbd>TAB</kbd>s don't re-spawn instruments.</p>
+        </div>
+        <div class="feature-card">
+          <h4>xcode-select Xcode picker</h4>
+          <p><code>xcode-select --switch &lt;TAB&gt;</code> &rarr; <code>xcodes=(/Applications/Xcode*.app)</code> &rarr; <code>_values "Available Xcodes" $xcodes</code>. Side-by-side Xcode versions are visible by glob, no enumeration of /Applications needed.</p>
+        </div>
+        <div class="feature-card">
+          <h4>xcrun shim for nested tools</h4>
+          <p>xcrun's design (<code>xcrun &lt;tool&gt; &lt;args&gt;</code>) hides nested tools from zsh's completion-system <code>#compdef</code> lookup &mdash; <code>swift-demangle</code> isn't directly on PATH, so <code>_swift-demangle</code> never fires. The shim at <code>bin/swift-demangle</code> (3-line POSIX <code>sh</code> wrapper running <code>xcrun swift-demangle "$@"</code>) gives users a direct PATH binary that surfaces the completer. Homebrew offers <code>--without-shims</code> for users who don't want the wrapper.</p>
+        </div>
+      </div>
+
+      <hr class="section-rule">
+
+      <!-- ═══════════════════════════════════════ -->
+      <!-- SECTION 4: TEST COVERAGE                -->
+      <!-- ═══════════════════════════════════════ -->
+      <h2 class="tutorial-title"><span class="step-hash">#</span>TEST COVERAGE</h2>
+      <p class="tutorial-subtitle">40 zunit <code>@test</code> cases across 6 files, plus 21 structural shell gates from the umbrella. The <code>t-completions.zsh</code> file pins every one of the 11 <code>_*</code> files individually.</p>
+
+      <table class="file-table">
+        <thead>
+          <tr>
+            <th>Test file</th>
+            <th class="num">@test count</th>
+            <th>What it pins</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>tests/t-completions.zsh</td><td class="num">20</td><td>Per-completer pins &mdash; each of the 11 <code>src/_*</code> files exists, starts with the right <code>#compdef</code> line, parses cleanly under <code>zsh -n</code></td></tr>
+          <tr><td>tests/t-contract.zsh</td><td class="num">3</td><td>Entrypoint stem matches plugin-dir basename (Zinit / OMZ source-line copy-paste pin); plugin file is exactly the 1-line <code>fpath</code> patch</td></tr>
+          <tr><td>tests/t-contract2.zsh</td><td class="num">5</td><td><code>src/</code> contains exactly 11 completion files with names matching the documented tool list</td></tr>
+          <tr><td>tests/t-contract3.zsh</td><td class="num">5</td><td><code>bin/swift-demangle</code> shim exists, is executable, has the <code>xcrun swift-demangle "$@"</code> body</td></tr>
+          <tr><td>tests/t-contract4.zsh</td><td class="num">5</td><td>SDK cache key consistency &mdash; <code>_xcodebuild</code> + <code>_swift</code> + <code>_xcrun</code> all use <code>SDKS</code> as the cache key (so SDK install invalidates everywhere)</td></tr>
+          <tr><td>tests/t-syntax.zsh</td><td class="num">2</td><td><code>zsh -n</code> parse-cleanness on entrypoint + every <code>src/_*</code> file</td></tr>
+          <tr class="total-row"><td>Total</td><td class="num">40</td><td>6 zunit files</td></tr>
+        </tbody>
+      </table>
+
+      <h3 style="font-family:'Orbitron',sans-serif;font-size:13px;letter-spacing:1.5px;color:var(--cyan);margin-top:1.5rem;">// STRUCTURAL GATES (21 shell scripts)</h3>
+      <p style="font-size:11.5px;color:var(--text-dim);line-height:1.6;">Same 21-script umbrella gate-set: 9 <code>docs/*.html</code> gates + 4 README + 3 man-page + 2 tests/ + 2 workflows + 1 cargo (vacuous).</p>
+
+      <hr class="section-rule">
+
+      <!-- ═══════════════════════════════════════ -->
+      <!-- SECTION 5: KEY DESIGN DECISIONS         -->
+      <!-- ═══════════════════════════════════════ -->
+      <h2 class="tutorial-title"><span class="step-hash">?</span>KEY DESIGN DECISIONS</h2>
+      <p class="tutorial-subtitle">Five tradeoffs unique to completing Xcode CLI tools.</p>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <h4>11 separate <code>#compdef</code> files, not one mega-file</h4>
+          <p>Each Xcode CLI tool is its own binary with its own flag surface; folding them into a single <code>_xcode</code> dispatcher would slow autoload and couple their lifecycles. Keeping 11 small <code>#compdef</code> files means zsh only loads the completer for the tool the user actually invokes &mdash; <code>compinit</code>-time cost is paid once and lazily-resolved per tool.</p>
+        </div>
+        <div class="feature-card">
+          <h4>Live project queries, not static enums</h4>
+          <p>Xcode schemes / targets / configurations / valid-archs differ per project. Hardcoding enums would be wrong the moment the user <code>cd</code>s into a different repo. Instead, <code>_xcodebuild</code> shells out to <code>xcodebuild -list</code> / <code>-showBuildSettings</code> at completion time &mdash; cost is one <code>xcodebuild</code> spawn per <kbd>TAB</kbd>, but the result is project-correct.</p>
+        </div>
+        <div class="feature-card">
+          <h4>Shim binary for xcrun nesting</h4>
+          <p><code>xcrun</code>'s dispatch model breaks zsh's completion-system <code>#compdef &lt;binary&gt;</code> contract &mdash; nested tools aren't directly on PATH. The shim path (<code>bin/swift-demangle</code> = <code>xcrun swift-demangle "$@"</code>) is the cleanest workaround: surface the tool as a PATH binary so the completer fires. Cost is one extra fork; benefit is autocomplete that Just Works.</p>
+        </div>
+        <div class="feature-card">
+          <h4>Shared SDK cache key</h4>
+          <p>Three completers (<code>_xcodebuild</code>, <code>_swift</code>, <code>_xcrun</code>) all need the SDK list. They share the cache key <code>SDKS</code>, so installing or uninstalling an SDK invalidates the cache for all three at once &mdash; no per-tool cache divergence. The cache key is plain <code>SDKS</code> (not prefix-keyed) because SDK lists are tiny and global.</p>
+        </div>
+        <div class="feature-card">
+          <h4>1-line plugin entrypoint</h4>
+          <p>The plugin file is literally <code>fpath=("${0:h}/src" $fpath)</code>. No <code>ZSH_ARGZERO</code> self-locate because the plugin file lives at the repo root, and <code>${0:h}</code> works correctly for direct sourcing. Zinit / OMZ / antibody all set <code>$0</code> to the plugin file's path before sourcing &mdash; the 2-line idiom is unnecessary here. Less code, fewer pins, same outcome.</p>
+        </div>
+      </div>
+
+    </main>
+
+    <footer style="text-align:center;padding:2rem;font-size:10px;color:var(--text-muted);font-family:'Orbitron',sans-serif;letter-spacing:2px;">
+      ZSH-XCODE-COMPLETIONS ENGINEERING REPORT &middot; 435 LOC &middot; 11 #COMPDEF FILES &middot; 40 ZUNIT @TEST CASES &middot; 21 STRUCTURAL GATES &middot; XCRUN-SHIM &middot; PROJECT-AWARE XCODEBUILD &middot; MENKETECHNOLOGIES
+    </footer>
+  </div>
+
+  <script>
+    const html = document.documentElement;
+    const btnTheme = document.getElementById('btnTheme');
+    const btnCrt = document.getElementById('btnCrt');
+    const btnNeon = document.getElementById('btnNeon');
+    const crtH = document.getElementById('crtH');
+    const crtV = document.getElementById('crtV');
+    btnTheme?.addEventListener('click', () => {
+      html.setAttribute('data-theme', html.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
+    });
+    btnCrt?.addEventListener('click', () => {
+      btnCrt.classList.toggle('active');
+      const on = btnCrt.classList.contains('active');
+      if (crtH) crtH.style.display = on ? '' : 'none';
+      if (crtV) crtV.style.display = on ? '' : 'none';
+    });
+    btnNeon?.addEventListener('click', () => {
+      btnNeon.classList.toggle('active');
+      document.querySelector('.app')?.classList.toggle('neon-off');
+    });
+  </script>
+</body>
+</html>

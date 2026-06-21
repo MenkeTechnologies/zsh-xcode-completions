@@ -1,4 +1,19 @@
-## master
+## 1.2.2
+
+### Added
+
+- `dyldinfo` completion
+- `instruments` completion
+
+### Changed
+
+None.
+
+### Fixed
+
+None.
+
+## 1.2.1
 
 ### Added
 

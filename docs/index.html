@@ -92,15 +92,19 @@ git clone https://github.com/MenkeTechnologies/zsh-xcode-completions
 
       <section class="tutorial-section">
         <h2>Covered binaries</h2>
+        <p>Eleven <code>#compdef</code> completers live under <code>src/</code>, one per tool. Each is autoloaded by zsh's completion system after the plugin prepends <code>src/</code> to <code>fpath</code>.</p>
         <table class="example-tbl">
           <tbody>
-            <tr><td><code>xcodebuild</code></td><td>build / archive / test / install</td></tr>
-            <tr><td><code>xcrun</code></td><td>locate / run developer tools (with shims for nested completion)</td></tr>
-            <tr><td><code>xcode-select</code></td><td>switch active developer directory</td></tr>
+            <tr><td><code>xcodebuild</code></td><td>build / analyze / archive / test / install — 31 flags + 7 build actions, project-aware</td></tr>
+            <tr><td><code>xcrun</code></td><td>locate / run developer tools (with shim for nested completion)</td></tr>
+            <tr><td><code>xcode-select</code></td><td>switch / print / reset active developer directory</td></tr>
             <tr><td><code>genstrings</code></td><td>extract <code>.strings</code> from source</td></tr>
-            <tr><td><code>nm</code> / <code>strings</code></td><td>symbol / string inspection</td></tr>
-            <tr><td><code>plutil</code></td><td>property-list utility</td></tr>
-            <tr><td><code>swift</code></td><td>Swift compiler / REPL / package manager</td></tr>
+            <tr><td><code>nm</code></td><td>symbol-table dump — 18 flags incl. <code>-arch</code> enum</td></tr>
+            <tr><td><code>strings</code></td><td>printable-string extraction — flags + <code>-arch</code> enum</td></tr>
+            <tr><td><code>dyldinfo</code></td><td>dyld load-command / binding / rebase inspector</td></tr>
+            <tr><td><code>plutil</code></td><td>property-list lint / convert / extract / edit</td></tr>
+            <tr><td><code>instruments</code></td><td>profiling — template + attach-pid completion</td></tr>
+            <tr><td><code>swift</code></td><td>Swift compiler driver — emit / search-path / SDK flags</td></tr>
             <tr><td><code>swift-demangle</code></td><td>demangle Swift symbols</td></tr>
           </tbody>
         </table>
@@ -108,11 +112,77 @@ git clone https://github.com/MenkeTechnologies/zsh-xcode-completions
 
       <section class="tutorial-section">
         <h2>Examples</h2>
-<pre>xcodebuild -scheme &lt;TAB&gt;       # scheme completion
-xcodebuild -destination &lt;TAB&gt;  # destination platform completion
-xcrun &lt;TAB&gt;                    # tool name completion
-swift package &lt;TAB&gt;             # swift package subcommand completion
-plutil -convert &lt;TAB&gt;          # format completion</pre>
+        <p>Every example below maps to a real completion state in one of the <code>src/_*</code> files. Press <kbd>TAB</kbd> at the cursor:</p>
+<pre>xcodebuild -scheme &lt;TAB&gt;          # schemes parsed from `xcodebuild -list`
+xcodebuild -target &lt;TAB&gt;          # targets parsed from `xcodebuild -list`
+xcodebuild -configuration &lt;TAB&gt;   # configs parsed from `xcodebuild -list`
+xcodebuild -arch &lt;TAB&gt;            # VALID_ARCHS from `xcodebuild -showBuildSettings`
+xcodebuild -sdk &lt;TAB&gt;             # cached SDK list (`xcodebuild -showsdks`)
+xcodebuild -project &lt;TAB&gt;         # glob *.xcodeproj
+xcodebuild -workspace &lt;TAB&gt;       # glob *.xcworkspace
+xcodebuild &lt;TAB&gt;                  # build actions: build/clean/test/archive/…
+xcrun &lt;TAB&gt;                       # tools in $(dirname $(xcrun -f swift))
+xcrun --sdk &lt;TAB&gt;                 # cached SDK platforms
+xcrun --toolchain &lt;TAB&gt;           # glob installed .xctoolchain dirs
+xcode-select --switch &lt;TAB&gt;       # glob /Applications/Xcode*.app
+plutil -convert &lt;TAB&gt;             # json / xml1 / binary1
+nm -arch &lt;TAB&gt;                    # arm64 / armv7 / armv7s / i386 / x86_64
+instruments -t &lt;TAB&gt;              # templates from `instruments -s templates`</pre>
+      </section>
+
+      <section class="tutorial-section">
+        <h2>Per-tool flag reference</h2>
+        <p>Every flag below is taken directly from the <code>src/_*</code> completers. Flags marked with &ldquo;&rarr;&rdquo; offer value completion at the next <kbd>TAB</kbd>.</p>
+
+        <table class="example-tbl">
+          <tbody>
+            <tr><td><code>xcodebuild</code></td><td>31 flags. Project-aware values: <code>-scheme</code>&rarr;, <code>-target</code>&rarr;, <code>-configuration</code>&rarr;, <code>-arch</code>&rarr;, <code>-sdk</code>&rarr;, <code>-project</code>&rarr;<code>*.xcodeproj</code>, <code>-workspace</code>&rarr;<code>*.xcworkspace</code>, <code>-xcconfig</code>&rarr;<code>*.xcconfig</code>. Path values: <code>-archivePath</code>, <code>-derivedDataPath</code>, <code>-resultBundlePath</code>. Toggles (<code>YES</code>/<code>NO</code>): <code>-enableAddressSanitizer</code>, <code>-enableThreadSanitizer</code>, <code>-enableUndefinedBehaviorSanitizer</code>, <code>-enableCodeCoverage</code>. Switches: <code>-n</code>/<code>-dry-run</code>, <code>-alltargets</code>, <code>-list</code>, <code>-showsdks</code>, <code>-showBuildSettings</code>, <code>-skipUnavailableActions</code>, <code>-usage</code>, <code>-version</code>. Archive/export: <code>-exportArchive</code>, <code>-exportFormat</code> (<code>IPA</code>/<code>PKG</code>/<code>APP</code>), <code>-exportInstallerIdentity</code>, <code>-exportProvisiningProfile</code>, <code>-exportSigningIdentity</code>, <code>-exportWithOriginalSigningIdentity</code>, <code>-destination</code>, <code>-destination-timeout</code>. Actions: <code>analyze</code>, <code>archive</code>, <code>build</code>, <code>clean</code>, <code>install</code>, <code>installsrc</code>, <code>test</code>.</td></tr>
+            <tr><td><code>xcrun</code></td><td><code>-f</code>/<code>--find</code>, <code>-h</code>/<code>--help</code>, <code>-k</code>/<code>--kill-cache</code>, <code>-l</code>/<code>--log</code>, <code>-n</code>/<code>--no-cache</code>, <code>-r</code>/<code>--run</code>, <code>-v</code>/<code>--verbose</code>, <code>--sdk</code>&rarr;, <code>--toolchain</code>&rarr;, <code>--show-sdk-path</code>, <code>--show-sdk-platform-path</code>, <code>--show-sdk-platform-version</code>, <code>--show-sdk-version</code>, <code>--version</code>. Positional tool name completes from <code>$(dirname $(xcrun -f swift))</code>.</td></tr>
+            <tr><td><code>xcode-select</code></td><td><code>-h</code>/<code>--help</code>, <code>-p</code>/<code>--print-path</code>, <code>-r</code>/<code>--reset</code>, <code>-s</code>/<code>--switch</code>&rarr; (glob <code>/Applications/Xcode*.app</code>), <code>-v</code>/<code>--version</code>, <code>--install</code>.</td></tr>
+            <tr><td><code>swift</code></td><td><code>-assert-config</code> (<code>Debug</code>/<code>Release</code>/<code>Replacement</code>), <code>-D</code>, <code>-emit-assembly</code>, <code>-emit-library</code>, <code>-emit-object</code>, <code>-F</code>&rarr;, <code>-framework</code>&rarr;, <code>-g</code>, <code>-gline-tables-only</code>, <code>-gnone</code>, <code>-help</code>, <code>-I</code>&rarr;, <code>-j</code>, <code>-L</code>&rarr;, <code>-l</code>&rarr;, <code>-module-cache-path</code>&rarr;, <code>-module-link-name</code>, <code>-module-name</code>, <code>-nostdimport</code>, <code>-O</code>, <code>-o</code>&rarr;, <code>-Onone</code>, <code>-Ounchecked</code>, <code>-sdk</code>&rarr; (cached), <code>-target-cpu</code>, <code>-target</code>, <code>-v</code>, <code>-version</code>, <code>-Xcc</code>, <code>-Xlinker</code>.</td></tr>
+            <tr><td><code>swift-demangle</code></td><td><code>-classify</code>, <code>-compact</code>, <code>-expand</code>, <code>-help</code>, <code>-help-list-hidden</code>, <code>-no-sugar</code>, <code>-remangle-new</code>, <code>-simplified</code>, <code>-test-remangle</code>, <code>-tree-only</code>, <code>-version</code>. Positional args are the symbol(s) to demangle.</td></tr>
+            <tr><td><code>nm</code></td><td><code>-a</code>, <code>-A</code>, <code>-arch</code>&rarr; (<code>arm64</code>/<code>armv7</code>/<code>armv7s</code>/<code>i386</code>/<code>x86_64</code>), <code>-f</code>, <code>-g</code>, <code>-j</code>, <code>-l</code>, <code>-m</code>, <code>-n</code>, <code>-o</code>, <code>-p</code>, <code>-P</code>, <code>-r</code>, <code>-s</code>, <code>-t</code> (<code>d</code>/<code>o</code>/<code>x</code>), <code>-u</code>, <code>-U</code>, <code>-x</code>. Positional &rarr; files.</td></tr>
+            <tr><td><code>strings</code></td><td><code>-</code> (all bytes), <code>-a</code> (all sections), <code>-arch</code>&rarr; (same enum as <code>nm</code>), <code>-n</code> (min length), <code>-o</code> (offset), <code>-t</code> (<code>d</code>/<code>o</code>/<code>x</code>). Positional &rarr; files.</td></tr>
+            <tr><td><code>dyldinfo</code></td><td><code>-arch</code>&rarr; (<code>i386</code>/<code>x86_64</code>/<code>armv7</code>/<code>arm64</code>), <code>-dylibs</code>, <code>-rebase</code>, <code>-bind</code>, <code>-weak_bind</code>, <code>-lazy_bind</code>, <code>-export</code>, <code>-opcodes</code>, <code>-function_starts</code>. Positional &rarr; Mach-O files.</td></tr>
+            <tr><td><code>plutil</code></td><td><code>-convert</code>&rarr; (<code>json</code>/<code>xml1</code>/<code>binary1</code>), <code>-insert</code>, <code>-replace</code> (both: keypath &rarr; type <code>-bool</code>/<code>-integer</code>/<code>-float</code>/<code>-string</code>/<code>-date</code>/<code>-data</code>/<code>-xml</code>/<code>-json</code> &rarr; value), <code>-remove</code>, <code>-extract</code>&rarr;, <code>-e</code>, <code>-help</code>, <code>-lint</code>, <code>-o</code>&rarr;, <code>-p</code>, <code>-r</code>, <code>-s</code>. Positional &rarr; files.</td></tr>
+            <tr><td><code>instruments</code></td><td><code>-w</code> (target device/sim), <code>-v</code>, <code>-t</code>&rarr; (templates, cached), <code>-s</code> (<code>templates</code>/<code>devices</code>), <code>-D</code>&rarr; (trace doc), <code>-l</code> (time limit), <code>-i</code> (instrument index). Mutex modes: <code>-p</code>&rarr;<code>_pids</code> (attach) vs. positional command name (launch).</td></tr>
+            <tr><td><code>genstrings</code></td><td><code>-a</code>, <code>-macRoman</code>, <code>-noPositionalParameters</code>, <code>-o</code>&rarr; (output dir), <code>-q</code>, <code>-s</code> (custom <code>NSLocalizedString</code> fn), <code>-skipTable</code>, <code>-u</code>. Positional &rarr; source files.</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="tutorial-section">
+        <h2>How completion data is sourced</h2>
+        <p>Most static flags are inline enums, but the context-sensitive values are queried live at <kbd>TAB</kbd> time:</p>
+        <table class="example-tbl">
+          <tbody>
+            <tr><td>schemes / targets / configurations</td><td><code>xcodebuild -list</code>, section-sliced with <code>sed</code></td></tr>
+            <tr><td>valid archs</td><td><code>xcodebuild -showBuildSettings | grep VALID_ARCHS | cut -f2 -d=</code></td></tr>
+            <tr><td>SDK list</td><td><code>xcodebuild -showsdks</code>, cached under key <code>SDKS</code> (shared by <code>xcodebuild</code> + <code>swift</code>) and <code>SDK_PLATFORMS</code> (<code>xcrun</code>)</td></tr>
+            <tr><td>xcrun tool names</td><td><code>ls $(dirname $(xcrun -f swift))</code></td></tr>
+            <tr><td>toolchains</td><td>glob <code>/Applications/Xcode*.app/Contents/Developer/Toolchains/*.xctoolchain</code></td></tr>
+            <tr><td>instruments templates</td><td><code>instruments -s templates</code> &rarr; <code>${(Q)${(f)...}}</code> split/unquote, header dropped, cached as <code>_instruments_templates</code></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="tutorial-section">
+        <h2>Configuration</h2>
+        <ul>
+          <li><strong>fpath</strong> — the plugin's sole job is <code>fpath=("${0:h}/src" $fpath)</code>. Whatever loader you use must run <code>compinit</code> <em>after</em> sourcing the plugin so the <code>_*</code> files are picked up.</li>
+          <li><strong>Completion cache</strong> — SDK lists use zsh's <code>_store_cache</code> / <code>_retrieve_cache</code>. To benefit, enable the cache policy in your <code>.zshrc</code>: <code>zstyle ':completion:*' use-cache on</code>. Cache keys: <code>SDKS</code>, <code>SDK_PLATFORMS</code>, <code>_instruments_templates</code>. Reinstalling an SDK invalidates <code>SDKS</code> for both <code>xcodebuild</code> and <code>swift</code>.</li>
+          <li><strong>Shims</strong> — the Homebrew formula installs <code>bin/swift-demangle</code> (a <code>#!/bin/sh</code> wrapper running <code>xcrun swift-demangle "$@"</code>) onto <code>PATH</code> so the <code>_swift-demangle</code> completer can fire. Install with <code>--without-shims</code> to skip it. Tradeoff: you cannot pass arguments to <code>xcrun</code> itself when calling through a shim.</li>
+        </ul>
+      </section>
+
+      <section class="tutorial-section">
+        <h2>Troubleshooting</h2>
+        <ul>
+          <li><strong>No completions appear</strong> — confirm <code>compinit</code> runs after the plugin loads, and that <code>src/</code> is on <code>fpath</code> (<code>echo $fpath | tr ' ' '\n' | grep zsh-xcode</code>).</li>
+          <li><strong>Stale SDK / scheme list</strong> — the SDK list is cached; clear it with <code>rm "$ZSH_COMPDUMP"*</code> and the zsh completion cache dir, or just open a new shell. Scheme/target/config lists are <em>not</em> cached and re-query <code>xcodebuild -list</code> every <kbd>TAB</kbd>.</li>
+          <li><strong>Project queries are slow</strong> — each <code>-scheme</code>/<code>-target</code>/<code>-arch</code> <kbd>TAB</kbd> spawns <code>xcodebuild</code>, which is inherently slow in large projects. This is the cost of project-correct values over static enums.</li>
+          <li><strong>swift-demangle won't complete through xcrun</strong> — that is the limitation the shim exists for. Either install the shim (default Homebrew behavior) or invoke <code>swift-demangle</code> as a direct PATH binary.</li>
+        </ul>
       </section>
 
       <section class="tutorial-section">

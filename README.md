@@ -32,6 +32,8 @@ Zsh completions for some of the Xcode command line tools. Currently:
 
 ### [`strykelang`](https://github.com/MenkeTechnologies/strykelang) &middot; [`zshrs`](https://github.com/MenkeTechnologies/zshrs) · [`MenkeTechnologiesMeta`](https://github.com/MenkeTechnologies/MenkeTechnologiesMeta) · [`zsh-more-completions`](https://github.com/MenkeTechnologies/zsh-more-completions) · [`zsh-cargo-completion`](https://github.com/MenkeTechnologies/zsh-cargo-completion) · [`zpwr`](https://github.com/MenkeTechnologies/zpwr)
 
+### [`Read the Docs`](https://menketechnologies.github.io/zsh-xcode-completions/) &middot; [`Engineering Report`](https://menketechnologies.github.io/zsh-xcode-completions/report.html)
+
 ---
 
 ## Table of Contents
